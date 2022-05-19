@@ -35,7 +35,6 @@ class paycheck_print
 							 paymethod,
 							 checknumber,
 							 checkamount,
-							 bankaccount1,
 							 netamount
 							 
 							 FROM prhmaster LEFT JOIN state_codes ON state_abbr=empstate WHERE batchid='".$bid."' AND empid='".$sno."'";
@@ -177,5 +176,5 @@ class paycheck_print
 			return 0;
 		}
 	}
-}
+} 
 ?>

@@ -1,4 +1,4 @@
-<?php 
+<?php  
 class gridData
 {
 	function isSearch($gridSearchFields)
@@ -8649,37 +8649,54 @@ and timesheet.status IN  ('ER','Approved','Billed','Rejected') AND emp_list.emp_
 		"IF(invoice.tsdate!='' AND invoice.tsdate1!='',CONCAT(invoice.tsdate,'-',invoice.tsdate1), 
 		CONCAT(invoice.invoice_date,'-',invoice.due_date))",
 		"invoice.invoice_date","invoice.due_date","round(invoice.total,".$decimalPref.")",
-		"round(invoice.total-(ifnull(a.amount,0)+ifnull(b.adj_amount,0)),".$decimalPref.")","CONCAT(contact_manage.loccode,' - ',contact_manage.heading)","department.deptname","IF(invoice.pdf_orientation=1,'Portrait','Landscape')","u.name",tzRetQueryStringDTime('invoice.delivered_time','DateTime24Sec','/'));
+		"round(invoice.total-(ifnull(a.amount,0)+ifnull(b.amount,0)),".$decimalPref.")","CONCAT(contact_manage.loccode,' - ',contact_manage.heading)","department.deptname","IF(invoice.pdf_orientation=1,'Portrait','Landscape')","u.name",tzRetQueryStringDTime('invoice.delivered_time','DateTime24Sec','/'));
 
-		$tque="SELECT COUNT(A.SNO) FROM (SELECT invoice.sno SNO,invoice.client_name,STR_TO_DATE(invoice.invoice_date,'%m/%d/%Y'),
-		STR_TO_DATE(invoice.due_date,'%m/%d/%Y'),invoice.deposit,invoice.deliver,invoice.billed,invoice.total,invoice.tsdate,
-		invoice.tsdate1,staffacc_cinfo.cname,ifnull(a.amount,0),invoice.sno sno1 
-		FROM invoice 
-		LEFT JOIN staffacc_cinfo ON staffacc_cinfo.sno = invoice.client_name 
-		LEFT JOIN Client_Accounts ON Client_Accounts.typeid=staffacc_cinfo.sno AND Client_Accounts.status='active' 
-		LEFT JOIN contact_manage ON Client_Accounts.loc_id=contact_manage.serial_no 
-		LEFT JOIN department ON Client_Accounts.deptid=department.sno 
-		LEFT JOIN (SELECT SUM(amount)amount,source FROM bank_trans WHERE source LIKE 'inv%' GROUP BY source) a ON (invoice.sno=substring(a.source,4))
-		LEFT JOIN (SELECT SUM(amount) adj_amount, inv_bill_lineid FROM acc_reg WHERE type='PMT-ADJ' GROUP BY inv_bill_lineid) b ON invoice.sno=b.inv_bill_lineid
-		LEFT JOIN users u ON invoice.delivered_by=u.username
-		WHERE invoice.deliver = 'Yes' AND invoice.status = 'ACTIVE' AND invoice.client_name=staffacc_cinfo.sno AND Client_Accounts.clienttype IN ('CUST','BOTH') AND department.sno !='0' AND department.sno IN(".$deptAccesSno.") ";
+		$tque="SELECT COUNT(A.SNO) FROM (SELECT invoice.sno SNO FROM invoice
+				LEFT JOIN staffacc_cinfo ON staffacc_cinfo.sno = invoice.client_name
+				LEFT JOIN Client_Accounts ON Client_Accounts.typeid=staffacc_cinfo.sno AND Client_Accounts.status='active'
+				LEFT JOIN contact_manage ON Client_Accounts.loc_id=contact_manage.serial_no
+				LEFT JOIN department ON Client_Accounts.deptid=department.sno
+				LEFT JOIN bank_trans a ON a.source=CONCAT('inv',invoice.sno) 
+				LEFT JOIN acc_reg b ON b.type='PMT-ADJ' AND invoice.sno=b.inv_bill_lineid
+				LEFT JOIN users u ON invoice.delivered_by=u.username
+				WHERE invoice.deliver = 'Yes' AND invoice.status = 'ACTIVE' AND invoice.client_name=staffacc_cinfo.sno AND Client_Accounts.clienttype IN ('CUST','BOTH') 
+				AND department.sno !='0' AND department.sno IN(".$deptAccesSno.") ";
 	
-		$oque="SELECT invoice.sno,invoice.client_name,STR_TO_DATE(invoice.invoice_date,'%m/%d/%Y'),
-		STR_TO_DATE(invoice.due_date,'%m/%d/%Y'),invoice.deposit,invoice.deliver,invoice.billed,round(invoice.total,".$decimalPref."),
-		invoice.tsdate,invoice.tsdate1,staffacc_cinfo.cname,ifnull(a.amount,0),invoice.sno SNO1,
-		round(invoice.total-(ifnull(a.amount,0)+ifnull(b.adj_amount,0)),".$decimalPref."),
-		IF(invoice.tsdate!='' AND invoice.tsdate1!='',CONCAT(invoice.tsdate,'-',invoice.tsdate1),
-		CONCAT(invoice.invoice_date,'-',invoice.due_date)) SERVICE_DATE ,invoice.invoice_number, 
-		".getEntityDispName('staffacc_cinfo.sno', 'staffacc_cinfo.cname', 1)." AS custname,CONCAT(contact_manage.loccode,' - ',contact_manage.heading),department.deptname,invoice.pdf_orientation,u.name,".tzRetQueryStringDTime('invoice.delivered_time','DateTime24Sec','/')." 
-		FROM invoice 
-		LEFT JOIN staffacc_cinfo ON staffacc_cinfo.sno = invoice.client_name 
-		LEFT JOIN Client_Accounts ON Client_Accounts.typeid=staffacc_cinfo.sno AND Client_Accounts.status='active'  
-		LEFT JOIN contact_manage ON Client_Accounts.loc_id=contact_manage.serial_no 
-		LEFT JOIN department ON Client_Accounts.deptid=department.sno 
-		LEFT JOIN (SELECT SUM(amount)amount,source FROM bank_trans WHERE source LIKE 'inv%' GROUP BY source) a ON(invoice.sno=substring(a.source,4))
-		LEFT JOIN (SELECT SUM(amount) adj_amount, inv_bill_lineid FROM acc_reg WHERE type='PMT-ADJ' GROUP BY inv_bill_lineid) b ON invoice.sno=b.inv_bill_lineid
-		LEFT JOIN users u ON invoice.delivered_by=u.username
-		WHERE invoice.deliver = 'Yes' AND invoice.status = 'ACTIVE' AND invoice.client_name=staffacc_cinfo.sno AND Client_Accounts.clienttype IN ('CUST','BOTH') AND department.sno !='0' AND department.sno IN(".$deptAccesSno.") ";
+		$oque="SELECT invoice.sno,
+				invoice.client_name,
+				STR_TO_DATE(invoice.invoice_date,'%m/%d/%Y'),
+				STR_TO_DATE(invoice.due_date,'%m/%d/%Y'),
+				invoice.deposit,
+				invoice.deliver,
+				invoice.billed,
+				round(invoice.total,".$decimalPref."),
+				invoice.tsdate,
+				invoice.tsdate1,
+				staffacc_cinfo.cname,
+				ifnull(a.amount,0),
+				invoice.sno SNO1,
+				round(invoice.total-(ifnull(a.amount,0)+ifnull(b.amount,0)),".$decimalPref."),
+				IF(invoice.tsdate!='' AND invoice.tsdate1!='',CONCAT(invoice.tsdate,'-',invoice.tsdate1),
+				CONCAT(invoice.invoice_date,'-',invoice.due_date)) SERVICE_DATE,
+				invoice.invoice_number,
+				".getEntityDispName('staffacc_cinfo.sno', 'staffacc_cinfo.cname', 1)." AS custname,
+				CONCAT(contact_manage.loccode,' - ',contact_manage.heading),
+				department.deptname,
+				invoice.pdf_orientation,
+				u.name,
+				".tzRetQueryStringDTime('invoice.delivered_time','DateTime24Sec','/')." 
+				FROM invoice
+				LEFT JOIN staffacc_cinfo ON staffacc_cinfo.sno = invoice.client_name
+				LEFT JOIN Client_Accounts ON Client_Accounts.typeid=staffacc_cinfo.sno AND Client_Accounts.status='active'
+				LEFT JOIN contact_manage ON Client_Accounts.loc_id=contact_manage.serial_no
+				LEFT JOIN department ON Client_Accounts.deptid=department.sno 
+				LEFT JOIN bank_trans a ON a.source=CONCAT('inv',invoice.sno) 
+				LEFT JOIN acc_reg b ON b.type='PMT-ADJ' AND invoice.sno=b.inv_bill_lineid
+				LEFT JOIN users u ON invoice.delivered_by=u.username
+				WHERE invoice.deliver = 'Yes' 
+				AND invoice.status = 'ACTIVE' 
+				AND Client_Accounts.clienttype IN ('CUST','BOTH')
+				AND department.sno IN(".$deptAccesSno.") ";
 	
 		$gstr = "";
 		$client_str="";
@@ -12517,28 +12534,41 @@ AND manage.name!='Applied' AND reqresponse.par_id='0'";
 		
 		//For Total Records Count
 		$tque = "SELECT count(*)
-		FROM recieve_pay_master 
-		LEFT JOIN reg_category ON reg_category.sno = recieve_pay_master.accountRef
-		LEFT JOIN staffacc_cinfo ON staffacc_cinfo.username = recieve_pay_master.entityRef
-		LEFT JOIN Client_Accounts ca ON (ca.typeid=staffacc_cinfo.sno AND ca.clienttype='CUST' AND ca.status='active')
-		LEFT JOIN (SELECT amount, rec_pay_id, cate_id FROM acc_reg WHERE type = 'PMT-ADJ') ac2 ON (ac2.rec_pay_id = recieve_pay_master.sno)
-		LEFT JOIN reg_category rc ON (rc.sno = ac2.cate_id)
-		WHERE recieve_pay_master.type = 'PMT' AND ca.deptid !='0' AND ca.deptid IN(".$deptAccesSno.")
-		AND DATE(recieve_pay_master.txnDate) >= '".$datein."'	
-		AND DATE(recieve_pay_master.txnDate) <= '".$datedue."' $cond ";
+				FROM recieve_pay_master
+				LEFT JOIN reg_category ON reg_category.sno = recieve_pay_master.accountRef
+				LEFT JOIN staffacc_cinfo ON staffacc_cinfo.username = recieve_pay_master.entityRef
+				LEFT JOIN Client_Accounts ca ON (ca.typeid=staffacc_cinfo.sno AND ca.clienttype='CUST' AND ca.status='active')
+				LEFT JOIN acc_reg ac2 ON ac2.type='PMT-ADJ' AND ac2.rec_pay_id = recieve_pay_master.sno
+				LEFT JOIN reg_category rc ON (rc.sno = ac2.cate_id)
+				WHERE recieve_pay_master.type = 'PMT' AND ca.deptid !='0' 
+				AND ca.deptid IN(".$deptAccesSno.")
+				AND DATE(recieve_pay_master.txnDate) >= '".$datein."'	
+				AND DATE(recieve_pay_master.txnDate) <= '".$datedue."' $cond ";
 			
-		$oque="SELECT recieve_pay_master.sno, DATE_FORMAT(recieve_pay_master.txnDate, '%m/%d/%Y'), recieve_pay_master.entityRef, 
-		recieve_pay_master.type, IF(recieve_pay_master.amount='',0,recieve_pay_master.amount), recieve_pay_master.description, recieve_pay_master.txnDate, reg_category.name, staffacc_cinfo.cname, recieve_pay_master.payMethod, recieve_pay_master.chkNumber, ".getEntityDispName('staffacc_cinfo.sno', 'staffacc_cinfo.cname', 1)." AS custname,IFNULL(ac2.amount,0) AS adjAmount,IF(IFNULL(rc.name,'')!='',rc.name,'-') AS adjustment_type
-		
-		FROM recieve_pay_master 
-		LEFT JOIN reg_category ON reg_category.sno = recieve_pay_master.accountRef
-		LEFT JOIN staffacc_cinfo ON staffacc_cinfo.username = recieve_pay_master.entityRef
-		LEFT JOIN Client_Accounts ca ON (ca.typeid=staffacc_cinfo.sno AND ca.clienttype='CUST' AND ca.status='active')
-		LEFT JOIN (SELECT amount, rec_pay_id, cate_id FROM acc_reg WHERE type = 'PMT-ADJ') ac2 ON (ac2.rec_pay_id = recieve_pay_master.sno)
-		LEFT JOIN reg_category rc ON (rc.sno = ac2.cate_id)
-		WHERE recieve_pay_master.type = 'PMT' AND ca.deptid !='0' AND ca.deptid IN(".$deptAccesSno.")
-		AND DATE(recieve_pay_master.txnDate) >= '".$datein."'	
-		AND DATE(recieve_pay_master.txnDate) <= '".$datedue."' $cond ";
+		$oque="SELECT recieve_pay_master.sno, 
+				DATE_FORMAT(recieve_pay_master.txnDate, '%m/%d/%Y'), 
+				recieve_pay_master.entityRef,
+				recieve_pay_master.type, 
+				IF(recieve_pay_master.amount='',0,recieve_pay_master.amount), 
+				recieve_pay_master.description, 
+				recieve_pay_master.txnDate, 
+				reg_category.name, 
+				staffacc_cinfo.cname, 
+				recieve_pay_master.payMethod, 
+				recieve_pay_master.chkNumber, 
+				".getEntityDispName('staffacc_cinfo.sno', 'staffacc_cinfo.cname', 1)." AS custname,
+				IFNULL(ac2.amount,0) AS adjAmount,
+				IF(IFNULL(rc.name,'')!='',rc.name,'-') AS adjustment_type
+				FROM recieve_pay_master
+				LEFT JOIN reg_category ON reg_category.sno = recieve_pay_master.accountRef
+				LEFT JOIN staffacc_cinfo ON staffacc_cinfo.username = recieve_pay_master.entityRef
+				LEFT JOIN Client_Accounts ca ON (ca.typeid=staffacc_cinfo.sno AND ca.clienttype='CUST' AND ca.status='active')
+				LEFT JOIN acc_reg ac2 ON ac2.type='PMT-ADJ' AND ac2.rec_pay_id = recieve_pay_master.sno
+				LEFT JOIN reg_category rc ON (rc.sno = ac2.cate_id)
+				WHERE recieve_pay_master.type = 'PMT' AND ca.deptid !='0' 
+				AND ca.deptid IN(".$deptAccesSno.")
+				AND DATE(recieve_pay_master.txnDate) >= '".$datein."'	
+				AND DATE(recieve_pay_master.txnDate) <= '".$datedue."' $cond ";
         
         $grpque = " GROUP BY recieve_pay_master.sno ";        
 		$lstr = $gd->buildLimt($gridPage,$gridRecords);
@@ -12549,7 +12579,7 @@ AND manage.name!='Applied' AND reqresponse.par_id='0'";
 		$tque=$gd->buildTQuery($tque,$qstr,'');		
 		$total =$gd->getTotalRows($tque);
 		
-		$oque="$oque $grpque $qstr $ostr $lstr";
+		$oque="$oque $qstr $grpque $ostr $lstr";
 		
     	$gridData=$gd->buildEmpMainPayRegister($oque);
 		
@@ -12591,14 +12621,25 @@ AND manage.name!='Applied' AND reqresponse.par_id='0'";
 		if($gridSortCol=="")
 		$gridSortCol=1;
 		$gd=new gridData();
-		$asFields=array("","wc.code","wc.title","GROUP_CONCAT(DISTINCT cs.company_code)","wc.status","rp.startdate","rp.enddate","rp.amount","rp.employer_amount","wc.cdate","cusers.name","wc.mdate","musers.name");
-		$ssFields=array("","wc.code","wc.title","GROUP_CONCAT(DISTINCT cs.company_code)","wc.status", tzRetQueryStringDTime('rp.startdate','Date','/'),tzRetQueryStringDTime('rp.enddate','Date','/'),"rp.amount","rp.employer_amount",tzRetQueryStringDTime('wc.cdate','DateTime','/'),"cusers.name",tzRetQueryStringDTime('wc.mdate','DateTime','/'),"musers.name");
+		if(AKKUPAY_WITH_SYMMETRY == "Y")
+		{
+			$asFields=array("","wc.code","wc.title","GROUP_CONCAT(DISTINCT cs.company_code)","wc.status","rp.startdate","rp.enddate","rp.amount","rp.employer_amount","wc.cdate","cusers.name","wc.mdate","musers.name");
+			$ssFields=array("","wc.code","wc.title","GROUP_CONCAT(DISTINCT cs.company_code)","wc.status", tzRetQueryStringDTime('rp.startdate','Date','/'),tzRetQueryStringDTime('rp.enddate','Date','/'),"rp.amount","rp.employer_amount",tzRetQueryStringDTime('wc.cdate','DateTime','/'),"cusers.name",tzRetQueryStringDTime('wc.mdate','DateTime','/'),"musers.name");
+				
+			$tque="SELECT COUNT(1) FROM workerscomp wc LEFT JOIN users cusers ON (cusers.username = wc.cuser) LEFT JOIN rates_period rp ON (rp.parentid = wc.sno AND rp.parenttype = 'WORKERSCOMP') LEFT JOIN users musers ON (musers.username = wc.muser) LEFT JOIN countries ON(countries.sno = wc.country) LEFT JOIN company_setup cs ON  FIND_IN_SET(cs.sno, wc.company_id) > 0 AND cs.status !='deleted' WHERE wc.status != 'backup' ";
 			
-		$tque="SELECT COUNT(1) FROM workerscomp wc LEFT JOIN users cusers ON (cusers.username = wc.cuser) LEFT JOIN rates_period rp ON (rp.parentid = wc.sno AND rp.parenttype = 'WORKERSCOMP') LEFT JOIN users musers ON (musers.username = wc.muser) LEFT JOIN countries ON(countries.sno = wc.country) LEFT JOIN company_setup cs ON  FIND_IN_SET(cs.sno, wc.company_id) > 0 AND cs.status !='deleted' WHERE wc.status != 'backup' ";
-		
-		$oque="SELECT wc.code, wc.title, GROUP_CONCAT(DISTINCT cs.company_code) ccode ,CONCAT(UCASE(LEFT(wc.status, 1)), LCASE(SUBSTRING(wc.status, 2))) sts, ".tzRetQueryStringDTime("rp.startdate","Date","/").", ".tzRetQueryStringDTime("rp.enddate","Date","/").", rp.amount,rp.employer_amount, ".tzRetQueryStringDTime("wc.cdate","DateTime","/").", cusers.name,".tzRetQueryStringDTime("wc.mdate","DateTime","/").", musers.name,wc.sno FROM workerscomp wc LEFT JOIN rates_period rp ON (rp.parentid = wc.sno AND rp.parenttype = 'WORKERSCOMP') LEFT JOIN users cusers ON (cusers.username = wc.cuser) LEFT JOIN users musers ON (musers.username = wc.muser) LEFT JOIN company_setup cs ON  FIND_IN_SET(cs.sno, wc.company_id) > 0 AND cs.status !='deleted'  WHERE wc.status != 'backup' ";
+			$oque="SELECT wc.code, wc.title, GROUP_CONCAT(DISTINCT cs.company_code) ccode ,CONCAT(UCASE(LEFT(wc.status, 1)), LCASE(SUBSTRING(wc.status, 2))) sts, ".tzRetQueryStringDTime("rp.startdate","Date","/").", ".tzRetQueryStringDTime("rp.enddate","Date","/").", rp.amount,rp.employer_amount, ".tzRetQueryStringDTime("wc.cdate","DateTime","/").", cusers.name,".tzRetQueryStringDTime("wc.mdate","DateTime","/").", musers.name,wc.sno FROM workerscomp wc LEFT JOIN rates_period rp ON (rp.parentid = wc.sno AND rp.parenttype = 'WORKERSCOMP') LEFT JOIN users cusers ON (cusers.username = wc.cuser) LEFT JOIN users musers ON (musers.username = wc.muser) LEFT JOIN company_setup cs ON  FIND_IN_SET(cs.sno, wc.company_id) > 0 AND cs.status !='deleted'  WHERE wc.status != 'backup' ";
 
-		$gstr="GROUP BY wc.sno ";
+			$gstr="GROUP BY wc.sno ";
+		} else {
+			$asFields=array("","wc.code","wc.title","wc.state","countries.country","rp.startdate","rp.enddate","rp.amount","wc.cdate","cusers.name","wc.mdate","musers.name");
+			$ssFields=array("","wc.code","wc.title","wc.state","countries.country", tzRetQueryStringDTime('rp.startdate','Date','/'),tzRetQueryStringDTime('rp.enddate','Date','/'),"rp.amount",tzRetQueryStringDTime('wc.cdate','DateTime','/'),"cusers.name",tzRetQueryStringDTime('wc.mdate','DateTime','/'),"musers.name");
+				
+			$tque="SELECT count(1) FROM workerscomp wc LEFT JOIN users cusers ON (cusers.username = wc.cuser) LEFT JOIN rates_period rp ON (rp.parentid = wc.sno AND rp.parenttype = 'WORKERSCOMP') LEFT JOIN users musers ON (musers.username = wc.muser) LEFT JOIN countries ON(countries.sno = wc.country) WHERE wc.status = 'active' ";
+			
+			$oque="SELECT wc.code, wc.title, wc.state, countries.country, ".tzRetQueryStringDTime("rp.startdate","Date","/").", ".tzRetQueryStringDTime("rp.enddate","Date","/").", rp.amount, ".tzRetQueryStringDTime("wc.cdate","DateTime","/").", cusers.name,".tzRetQueryStringDTime("wc.mdate","DateTime","/").", musers.name,wc.sno FROM workerscomp wc LEFT JOIN rates_period rp ON (rp.parentid = wc.sno AND rp.parenttype = 'WORKERSCOMP') LEFT JOIN users cusers ON (cusers.username = wc.cuser) LEFT JOIN users musers ON (musers.username = wc.muser) LEFT JOIN countries ON(countries.sno = wc.country) WHERE wc.status = 'active'";
+			$gstr="";
+		}
 		$lstr=$gd->buildLimt($gridPage,$gridRecords);
 		$gqstr=$gd->buildQSTRGroup($gridSearchType,$gridSearchFields,$ssFields);
 		$ostr=$gd->buildOSTR($gridSortCol,$gridSort,$asFields);
@@ -12621,24 +12662,46 @@ AND manage.name!='Applied' AND reqresponse.par_id='0'";
 		$j=0;
 		$grid=array();
 		$res=mysql_query($que,$db);
-        while ($row=mysql_fetch_array($res))
+		if(AKKUPAY_WITH_SYMMETRY == "Y")
 		{
-			$grid[$j][0]="";
-			$grid[$j][1]=$this->convertSpecChars(stripslashes($row[0]));
-			$grid[$j][2]=$this->convertSpecChars(stripslashes($row[1]));
-			$grid[$j][3]=$this->convertSpecChars(stripslashes($row[2]));
-			$grid[$j][4]=$this->convertSpecChars(stripslashes($row[3]));
-			$grid[$j][5]=$this->convertSpecChars($row[4]);
-			$grid[$j][6]=$this->convertSpecChars($row[5]);
-			$grid[$j][7]=$this->convertSpecChars($row[6]);
-			$grid[$j][8]=$this->convertSpecChars($row[7]);
-			$grid[$j][9]=$this->convertSpecChars(stripslashes($row[8]));
-			$grid[$j][10]=$this->convertSpecChars($row[9]);
-			$grid[$j][11]=$this->convertSpecChars(stripslashes($row[10]));
-			$grid[$j][12]=$this->convertSpecChars(stripslashes($row[11]));
-			$grid[$j][13]="";
-			$grid[$j][14]=$row[12];
-			$j++;
+			while ($row=mysql_fetch_array($res))
+			{
+				$grid[$j][0]="";
+				$grid[$j][1]=$this->convertSpecChars(stripslashes($row[0]));
+				$grid[$j][2]=$this->convertSpecChars(stripslashes($row[1]));
+				$grid[$j][3]=$this->convertSpecChars(stripslashes($row[2]));
+				$grid[$j][4]=$this->convertSpecChars(stripslashes($row[3]));
+				$grid[$j][5]=$this->convertSpecChars($row[4]);
+				$grid[$j][6]=$this->convertSpecChars($row[5]);
+				$grid[$j][7]=$this->convertSpecChars($row[6]);
+				$grid[$j][8]=$this->convertSpecChars($row[7]);
+				$grid[$j][9]=$this->convertSpecChars(stripslashes($row[8]));
+				$grid[$j][10]=$this->convertSpecChars($row[9]);
+				$grid[$j][11]=$this->convertSpecChars(stripslashes($row[10]));
+				$grid[$j][12]=$this->convertSpecChars(stripslashes($row[11]));
+				$grid[$j][13]="";
+				$grid[$j][14]=$row[12];
+				$j++;
+			}
+		}else{
+			while ($row=mysql_fetch_array($res))
+			{
+				$grid[$j][0]="";
+				$grid[$j][1]=$this->convertSpecChars(stripslashes($row[0]));
+				$grid[$j][2]=$this->convertSpecChars(stripslashes($row[1]));
+				$grid[$j][3]=$this->convertSpecChars(stripslashes($row[2]));
+				$grid[$j][4]=$this->convertSpecChars(stripslashes($row[3]));
+				$grid[$j][5]=$this->convertSpecChars($row[4]);
+				$grid[$j][6]=$this->convertSpecChars($row[5]);
+				$grid[$j][7]=$this->convertSpecChars($row[6]);
+				$grid[$j][8]=$this->convertSpecChars($row[7]);
+				$grid[$j][9]=$this->convertSpecChars(stripslashes($row[8]));
+				$grid[$j][10]=$this->convertSpecChars($row[9]);
+				$grid[$j][11]=$this->convertSpecChars(stripslashes($row[10]));
+				$grid[$j][12]="";
+				$grid[$j][13]=$row[11];
+				$j++;
+			}
 		}
         return $grid;
 	}
@@ -12751,7 +12814,7 @@ AND manage.name!='Applied' AND reqresponse.par_id='0'";
 		$gd=new gridData();
 		
 		$banacttype = $gridExtraFields['getFrmPage'];
-		if($gridExtraFields['getFrmPage'] == "BANKING"){
+		if($gridExtraFields['getFrmPage'] == "BANKING" && AKKUPAY_WITH_SYMMETRY == "Y"){
 		
 		$asFields=array("", "cs.company_code", "reg_category.name", "reg_category.acc_number", "reg_category.accounttype", "","ac_chart.OpenBalance", "reg_category.c_date","users.name","ac_chart.DateModified","users.name");
 		
@@ -12846,7 +12909,7 @@ AND manage.name!='Applied' AND reqresponse.par_id='0'";
 		//----------------------------------------
 
 		
-		if($banacttype=='BANKING')
+		if($banacttype=='BANKING' && AKKUPAY_WITH_SYMMETRY == "Y")
 		{
 			while ($row=mysql_fetch_array($res))
 			{
@@ -16234,6 +16297,8 @@ $ssFields=array("","candidate_list.profiletitle","CONCAT_WS(' ', candidate_list.
 
 		$res	= mysql_query($que,$db);
 		$decimalPref    = getDecimalPreference();
+		if(AKKUPAY_WITH_SYMMETRY == 'Y')
+		{
 		while ($row=mysql_fetch_array($res))
 		{
 
@@ -16259,6 +16324,18 @@ $ssFields=array("","candidate_list.profiletitle","CONCAT_WS(' ', candidate_list.
 
 			$j++;
 		}
+		}else{
+		while ($row=mysql_fetch_array($res))
+		{
+
+			$grid[$j][0]	= "<label class='container-chk'><input type='checkbox' name='auids[]' OnClick='chk_clearTop()' value='".$row[0]."'><span class='checkmark'></span></label>".$gif;
+			$grid[$j][1]	= $this->convertSpecChars($row[1]);
+			$grid[$j][2]	= $this->convertSpecChars($row[2]);
+			$grid[$j][3]	= $this->convertSpecChars($row[0]);
+
+			$j++;
+		}
+		}
 
 		return $grid;
 	}
@@ -16272,6 +16349,8 @@ $ssFields=array("","candidate_list.profiletitle","CONCAT_WS(' ', candidate_list.
 			$gridSortCol = 1;
 
 		$gd		= new gridData();
+	if(AKKUPAY_WITH_SYMMETRY == 'Y')
+		{
 		$asFields	= array("","GROUP_CONCAT(company_code)","eartype","benefittype","benefit_code","hours","accrual_rate","worked_hours","accrued_rate","stime","cname","mdate","mname");
 		$ssFields	= array("","GROUP_CONCAT(company_code)","eartype","benefittype","benefit_code","hours","accrual_rate","worked_hours","accrued_rate","stime","cname","mdate","mname");
 		
@@ -16299,18 +16378,6 @@ $ssFields=array("","candidate_list.profiletitle","CONCAT_WS(' ', candidate_list.
           LEFT JOIN ste_manage ste ON ste.sno=companyear.benefit_type AND ste.type='benefit') AS Benefits
  WHERE 1 = 1";
 
-		/*$grpque		= " GROUP BY compsno";
-		$qstr 		= "";
-		$lstr		= $gd->buildLimt($gridPage,$gridRecords);
-		$qstr		= $gd->buildQSTR($gridSearchType,$gridSearchFields,$asFields);
-		$qstr 		.= $qstr1;
-
-		$ostr		= $gd->buildOSTR($gridSortCol,$gridSort,$ssFields); // Order by fields, append the where clause accordingly
-
-		$tque		= $gd->buildTQuery($tque,$qstr,$grpque);
-		$oque		= "$oque $qstr $grpque $ostr $lstr";	//For Total Records Data
-
-		$total		= $gd->getTotalRows($tque);*/
 		
 		$gstr="GROUP BY compsno ";
 		$lstr=$gd->buildLimt($gridPage,$gridRecords);
@@ -16321,6 +16388,26 @@ $ssFields=array("","candidate_list.profiletitle","CONCAT_WS(' ', candidate_list.
         $gstr.= $hstr;
 		$tque=$gd->buildTQuery($tque,$qstr,$gstr);
 		$oque=$gd->buildOQuery($oque,$qstr,$ostr,$lstr,$gstr);
+		}else{
+		$asFields	= array("","eartype","EarnedBenefit");
+		$ssFields	= array("","eartype","EarnedBenefit");
+
+		$tque		= " SELECT COUNT(1) FROM (SELECT sno,eartype,'EarnedBenefit' FROM companyear UNION SELECT sno,name,'OtherBenefit' FROM companycon WHERE status='active') AS Benefits WHERE 1 = 1 ";
+
+		$oque		= " SELECT * FROM (SELECT CONCAT('e_',sno),eartype,'EarnedBenefit' FROM companyear UNION SELECT CONCAT('c_',sno),name,'OtherBenefit' FROM companycon WHERE status='active') AS Benefits WHERE 1 = 1 ";
+
+		$grpque		= "";
+		$qstr 		= "";
+
+		$lstr		= $gd->buildLimt($gridPage,$gridRecords);
+		$qstr		= $gd->buildQSTR($gridSearchType,$gridSearchFields,$asFields);
+		$qstr 		.= $qstr1;
+
+		$ostr		= $gd->buildOSTR($gridSortCol,$gridSort,$ssFields); // Order by fields, append the where clause accordingly
+
+		$tque		= $gd->buildTQuery($tque,$qstr,$grpque);
+		$oque		= "$oque $qstr $grpque $ostr $lstr";	//For Total Records Data
+		}
 		$total=$gd->getTotalCount($tque);
 		$gridData	= $gd->buildBenefits($oque);
 
@@ -21793,7 +21880,8 @@ $ssFields=array("","candidate_list.profiletitle","CONCAT_WS(' ', candidate_list.
 			}
 			$customerForAll = "";
 			if(!empty($row[9]) && $row[9]=='Y') {
-				$customerForAll = "<span style='margin:8px 33px 0px;position:absolute;'><i class='fa fa-check-square-o'></i></span>";
+				/*$customerForAll = "<span style='margin:8px 33px 0px;position:absolute;'><i class='fa fa-check-square-o'></i></span>";*/
+				$customerForAll = "<span><i class='fa fa-check-square-o'></i></span>";
 			}
 
 			$grid[$j][0]="<label class='container-chk'><input type=checkbox ".$isdisabled." ".$name." OnClick=chk_clearTop() value='".$chboxValues."'><span class='checkmark'></span></label>";
@@ -27781,7 +27869,7 @@ WHERE  {$common_range}";
 			$grid[$j][5] = $this->convertSpecChars($row[5]);
 			$grid[$j][6] = number_format($this->convertSpecChars($row[6]),2,'.','');
 			$grid[$j][7] = number_format($this->convertSpecChars($row[7]),2,'.','');
-			$grid[$j][8] = "<a href=ee_view_paycheck.php?sno=".$row[0]." target='_blank'><i class='fa fa-eye' title='Employee View of Paystub'></i></a>";
+			$grid[$j][8] = "<a href=ee_view_paycheck.php?prhsno=".$row[0]." target='_blank'><i class='fa fa-eye' title='Employee View of Paystub'></i></a>";
 			$grid[$j][9] = "";
 			
 			$grid[$j][10]=$row[0];
@@ -28765,7 +28853,7 @@ WHERE  {$common_range}";
 					JOIN contact_manage cm ON cm.serial_no=p.locid
 					JOIN pay_schedule ps ON ps.sno = p.payschid
 					LEFT JOIN apUsers a ON FIND_IN_SET(p.locid,a.locids)
-					WHERE 1=1 AND p.batchtype='Regular' AND a.username='$username' AND p.status NOT IN ('P','R')".$dataString;
+					WHERE 1=1 AND p.batchtype='Regular' AND a.username='$username' AND p.status NOT IN ('PPR','R','P')".$dataString;
 					// AND p.batchtype='Regular'
 		$gstr = "GROUP BY p.sno";
 
@@ -28863,7 +28951,7 @@ WHERE  {$common_range}";
 					JOIN contact_manage cm ON cm.serial_no=p.locid
 					-- JOIN pay_schedule ps ON ps.sno = p.payschid
 					LEFT JOIN apUsers a ON FIND_IN_SET(p.locid,a.locids)
-					WHERE 1=1 AND a.username='$username' AND p.batchtype='Daily' AND p.status NOT IN ('P','R') ".$dataString;
+					WHERE 1=1 AND a.username='$username' AND p.batchtype='Daily' AND p.status NOT IN ('PPR','R','P') ".$dataString;
 				 //WHERE 1=1 AND a.username='$username' AND p.batchtype='Daily'".$dataString;
 
 		$gstr = "GROUP BY p.sno";
@@ -28956,7 +29044,7 @@ WHERE  {$common_range}";
 					JOIN contact_manage cm ON cm.serial_no=p.locid
 					JOIN pay_schedule ps ON ps.sno = p.payschid
 					LEFT JOIN apUsers a ON FIND_IN_SET(p.locid,a.locids)
-					WHERE 1=1 AND a.username='$username' AND p.batchtype='Supplemental' AND p.status NOT IN ('R','P')";
+					WHERE 1=1 AND a.username='$username' AND p.batchtype='Supplemental' AND p.status NOT IN ('R','PPR','P')";
 				// AND p.batchtype='Supplemental'
 		$gstr = "GROUP BY p.sno";
 
@@ -29018,9 +29106,9 @@ WHERE  {$common_range}";
 
 		$gd = new gridData();
 
-		$asFields = array("p.sno","cs.company_code","cm.loccode","ps.pay_schedule_name",tzRetQueryStringDate('p.paysdate','Date','/'),tzRetQueryStringDate('p.payedate','Date','/'),tzRetQueryStringDate('p.paydate','Date','/'),tzRetQueryStringDate('p.payrdate','Date','/'),"CASE p.status WHEN 'BR' THEN 'Batch Review' WHEN 'PP' THEN 'Payroll Processing' WHEN 'PR' THEN 'Payroll Review' WHEN 'CT' THEN 'Calculating Tax' WHEN 'PC' THEN 'Payroll Completed' WHEN 'CP' THEN 'Check Printing' WHEN 'ACH' THEN 'ACH' WHEN 'CARD' THEN 'Pay Card' WHEN 'P' THEN 'Preview Correction' WHEN 'R' THEN 'Reverted' WHEN 'M' THEN 'Modified' END");
+		$asFields = array("p.sno","cs.company_code","cm.loccode","ps.pay_schedule_name",tzRetQueryStringDate('p.paysdate','Date','/'),tzRetQueryStringDate('p.payedate','Date','/'),tzRetQueryStringDate('p.paydate','Date','/'),tzRetQueryStringDTime('p.payrdate','DateTime','/'),"c.name","CASE p.status WHEN 'BR' THEN 'Batch Review' WHEN 'PP' THEN 'Payroll Processing' WHEN 'PR' THEN 'Payroll Review' WHEN 'CT' THEN 'Calculating Tax' WHEN 'PC' THEN 'Payroll Completed' WHEN 'CP' THEN 'Check Printing' WHEN 'ACH' THEN 'ACH' WHEN 'CARD' THEN 'Pay Card' WHEN 'P' THEN 'Preview Correction' WHEN 'R' THEN 'Reverted' WHEN 'M' THEN 'Modified' END",tzRetQueryStringDTime('p.mdate','DateTime','/'),"m.name");
 
-		$ssFields = array("p.sno","cs.company_code","cm.loccode","ps.pay_schedule_name","p.paysdate","p.payedate","p.paydate","p.payrdate","Status");
+		$ssFields = array("p.sno","cs.company_code","cm.loccode","ps.pay_schedule_name","p.paysdate","p.payedate","p.paydate","p.payrdate","c.name","Status",tzRetQueryStringDTime('p.mdate','DateTime','/'),"m.name");
 
 		$tque= $oque="SELECT p.sno AS 'payBatchSno',
 					cs.company_code AS 'CompanyCode',
@@ -29029,7 +29117,7 @@ WHERE  {$common_range}";
 					DATE_FORMAT(p.paysdate,'%m/%d/%Y') AS 'StartDate',
 					DATE_FORMAT(p.payedate,'%m/%d/%Y') AS 'EndDate',
 					DATE_FORMAT(p.paydate,'%m/%d/%Y') AS 'PayData',
-					DATE_FORMAT(p.payrdate,'%m/%d/%Y') AS 'RunData',
+					".tzRetQueryStringDTime("p.payrdate","DateTime","/")." AS 'RunData',
 					CASE p.status 
 					WHEN 'BR' THEN 'Batch Review'
 					WHEN 'PP' THEN 'Payroll Processing'
@@ -29044,19 +29132,26 @@ WHERE  {$common_range}";
 					WHEN 'P' THEN 'Preview Correction'
 					END AS 'Status',
 					p.status AS 'orgStatus',
-					'Correction' AS batchtype
+					'Correction' AS batchtype,
+					c.name AS 'Created By',
+					".tzRetQueryStringDTime("p.mdate","DateTime","/")." AS 'Modified Date',
+					m.name AS 'Modified By'
 					FROM prhbatches p
 					JOIN company_setup cs ON cs.sno = p.compid
 					JOIN contact_manage cm ON cm.serial_no=p.locid
 					LEFT JOIN pay_schedule ps ON ps.sno = p.payschid
 					LEFT JOIN apUsers a ON FIND_IN_SET(p.locid,a.locids)
+					LEFT JOIN users c ON(p.cuser= c.username)
+					LEFT JOIN users m ON(p.muser= m.username)
 					WHERE 1=1 AND a.username='$username' AND p.status IN ('P','R','PC','M') ";
 
 		$gstr = "GROUP BY p.sno";
+		
+		$ostr = " ORDER BY p.mdate DESC, p.paydate DESC ";		
 
 		$lstr=$gd->buildLimt($gridPage,$gridRecords);
 		$qstr=$gd->buildQSTR($gridSearchType,$gridSearchFields,$asFields);
-		$ostr=$gd->buildOSTR($gridSortCol,$gridSort,$ssFields);
+		//$ostr=$gd->buildOSTR($gridSortCol,$gridSort,$ssFields);
 
 		$tque=$gd->buildTQuery($tque,$qstr,$gstr);
 		$oque=$gd->buildOQuery($oque,$qstr,$ostr,$lstr,$gstr);
@@ -29069,6 +29164,7 @@ WHERE  {$common_range}";
 		//$objResponse->addScriptCall("updateGridPrint",$objResponse->phpToJS($gridData),$total,$tque,$oque);
 
 		return $objResponse;
+		
 	}
 
 	function buildSSCorrectionPayrollLists($que)
@@ -29095,9 +29191,12 @@ WHERE  {$common_range}";
 			$grid[$j][5] = $this->convertSpecChars($row[5]);
 			$grid[$j][6] = $this->convertSpecChars($row[6]);
 			$grid[$j][7] = $this->convertSpecChars($row[7]);
-			$grid[$j][8] = $this->convertSpecChars($row[8]);
-			$grid[$j][9] = "";
-			$grid[$j][10] = $row[0].'|'.$row[9].'|'.$row[10];
+			$grid[$j][8] = $this->convertSpecChars($row[11]);
+			$grid[$j][9] = $this->convertSpecChars($row[8]);
+			$grid[$j][10] = $this->convertSpecChars($row[12]);
+			$grid[$j][11] = $this->convertSpecChars($row[13]);
+			$grid[$j][12] = "";
+			$grid[$j][13] = $row[0].'|'.$row[9].'|'.$row[10];
 			
 			$j++;
 		}

@@ -11,7 +11,6 @@
 	
 	global $db;
 	$GridHS	= true;
-	
 	require("Menu.inc");
 	$menu=new EmpMenu(); 
 	require_once($akken_psos_include_path.'commonfuns.inc'); 
